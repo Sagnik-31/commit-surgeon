@@ -1,4 +1,5 @@
 """Git plumbing: scan, backup, commit, undo. No destructive commands."""
+import difflib
 import json
 import os
 import subprocess
@@ -159,12 +160,52 @@ def _build_change(repo, xy: str, path: str, old: str) -> Change:
     return ch
 
 
+def _head_text(repo, path):
+    r = _git(repo, "show", f"HEAD:{path}", check=False)
+    return r.stdout if r.returncode == 0 else None
+
+
+def _pair_renames(repo, changes: list) -> list:
+    """Merge a deleted file and a new file with similar content into one rename."""
+    deleted = [c for c in changes if c.status == "D" and not c.skipped]
+    added = [c for c in changes if c.status in ("U", "A") and not c.skipped]
+    used = set()
+    for new in added:
+        try:
+            new_text = (Path(repo) / new.path).read_text(
+                encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        best, best_text, best_ratio = None, "", 0.0
+        for old in deleted:
+            if old.path in used or Path(old.path).suffix != Path(new.path).suffix:
+                continue
+            old_text = _head_text(repo, old.path)
+            if old_text is None:
+                continue
+            ratio = difflib.SequenceMatcher(None, old_text, new_text).ratio()
+            if ratio > best_ratio:
+                best, best_text, best_ratio = old, old_text, ratio
+        if best is None or best_ratio < 0.6:
+            continue
+        used.add(best.path)
+        new.status, new.old_path = "R", best.path
+        lines = difflib.unified_diff(best_text.splitlines(),
+                                     new_text.splitlines(),
+                                     lineterm="", n=0)
+        body = [ln for ln in lines if not ln.startswith(("---", "+++"))]
+        new.diff = f"renamed: {best.path} -> {new.path}\n" + "\n".join(body) + "\n"
+        new.additions = sum(1 for ln in body if ln.startswith("+"))
+        new.deletions = sum(1 for ln in body if ln.startswith("-"))
+    return [c for c in changes if c.path not in used]
+
+
 def scan_changes(repo) -> list:
     """Return one Change per modified, added, deleted or untracked file."""
     out = _git(repo, "status", "--porcelain=v1", "-z",
                "--untracked-files=all").stdout
-    return [_build_change(repo, xy, p, o) for xy, p, o in _parse_status(out)]
-
+    changes = [_build_change(repo, xy, p, o) for xy, p, o in _parse_status(out)]
+    return _pair_renames(repo, changes)
 
 def make_backup(repo) -> BackupInfo:
     """Save HEAD, branch and a patch before the first commit."""

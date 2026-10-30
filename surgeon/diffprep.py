@@ -9,7 +9,9 @@ def condense(change: Change, max_chars: int = 1200) -> str:
     if change.skipped:
         return f"(file not shown: {change.skip_reason})"
     stats = f"(+{change.additions} -{change.deletions})"
-    kept = [f"{change.status} {change.path} {stats}"]
+    name = (f"{change.old_path} -> {change.path}" if change.old_path
+        else change.path)
+    kept = [f"{change.status} {name} {stats}"]
     for line in change.diff.splitlines():
         if line.startswith(("+++", "---", "diff --git", "index ")):
             continue

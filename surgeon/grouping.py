@@ -21,6 +21,8 @@ def _stem(path: str) -> str:
 
 def guess_type(change: Change) -> str:
     """Heuristic: fix, refactor or feat. Returns '' when unsure."""
+    if change.status == "R":
+        return "refactor"
     if change.status == "A" or change.status == "U":
         return "feat"
     if change.status == "D":
