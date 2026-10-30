@@ -58,6 +58,11 @@ def _preflight(repo: Path) -> str:
         _fail("Not a git repo with at least one commit.")
     except OSError:
         _fail(f"Folder not found: {repo}")
+    top = gitops._git(repo, "rev-parse", "--show-toplevel").stdout.strip()
+    if os.path.normcase(os.path.realpath(top)) != \
+            os.path.normcase(os.path.realpath(str(repo))):
+        _fail(f"{repo} is not the root of a git repo (found {top}). "
+              "Use --repo with the repo's root folder.")
     gitops._check_state(repo)
     email = gitops._git(repo, "config", "user.email", check=False).stdout.strip()
     if not email:
