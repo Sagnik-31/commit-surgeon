@@ -17,7 +17,7 @@ Output ONLY Markdown with exactly these four sections in this order:
 Rules:
 - Summary: one sentence.
 - What changed: one bullet per commit, in order, using the commit subject.
-- Why: 1 to 3 sentences. Use reasons stated in the commit bodies. If none are stated, describe the purpose modestly from the commit types (a fix commit means a bug was fixed). Do not invent specifics.
+- Why: 1 to 2 sentences. Restate only what the commit subjects and bodies say. Never add motives such as clarity, maintainability, organization, discoverability or performance unless a commit body says so. Never call code deprecated or legacy unless a commit says so. A fix commit means a bug was fixed; say no more than that.
 - How to test: 2 to 5 numbered steps. If a test command is given, use it. Otherwise give manual steps that mention the changed files.
 - No other text before or after."""
 
