@@ -116,7 +116,7 @@ Sandbox repo, 3 commits, `--yes`.
 
 Times are model and git time for a run with `--yes`; approvals are human time. The first call after idle can take 10-20 s while the model loads; the tool warms it in the background. Measured on one Windows laptop; your numbers will differ.
 
-Hardware: CPU:Ryzen 7 8845HS, IGPU:Radeon 780 Graphics, DGPU:RTX 4060
+Hardware: CPU:Ryzen 7 8845HS, IGPU:Radeon 780 Graphics, DGPU:RTX 4060, RAM:16GB
 
 qwen3.5:4b is the recommended model (4B parameters, about 3.3 GB download, 3.1 GB in memory while running with a 4096 context, measured with `ollama ps` on a GPU). 2B is only about 20% faster on CPU, and its output was weaker: it once produced a subject ending in a dangling word, described a fix as "add test", and its PR text invented a test name, a command and motives such as "improves code organization". Treat 2B as an emergency option and read every step. Even 4B occasionally adds a phrase like "for clarity" in the PR "Why" section, which is why the PR is shown for approval.
 
