@@ -11,7 +11,7 @@ from rich.panel import Panel
 from rich.prompt import Confirm, Prompt
 from rich.table import Table
 
-from surgeon import diffprep, gitops, grouping, llm, messages, prdraft
+from surgeon import diffprep, gitops, grouping, hook, llm, messages, prdraft
 from surgeon.gitops import GitError
 
 app = typer.Typer(add_completion=False,
@@ -200,3 +200,23 @@ def undo(repo: Path = typer.Option(Path("."), "--repo")):
         gitops.undo(repo)
     except GitError as e:
         _fail(str(e))
+
+
+@app.command("install-hook")
+def install_hook_cmd(repo: Path = typer.Option(Path("."), "--repo")):
+    """Install a pre-commit hint that never blocks a commit."""
+    try:
+        path = hook.install_hook(repo)
+    except GitError as e:
+        _fail(str(e))
+    console.print(f"Hook installed: {path}")
+
+
+@app.command("uninstall-hook")
+def uninstall_hook_cmd(repo: Path = typer.Option(Path("."), "--repo")):
+    """Remove the hook, only if surgeon made it."""
+    try:
+        removed = hook.uninstall_hook(repo)
+    except GitError as e:
+        _fail(str(e))
+    console.print("Hook removed." if removed else "No surgeon hook found.")
